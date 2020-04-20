@@ -1,0 +1,69 @@
+---
+title: "Senate Popular Representation"
+author: "Tanner Gildea"
+date: "4/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 8, 
+                      fig.height = 5)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(ggthemes)
+library(scales)
+library(maps)
+
+data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Covid bill
+  select(-district) %>% 
+  na.omit() %>% 
+  subset(party == 'Republican' | party == 'Democrat' | party == 'Independent')
+  
+```
+
+```{r trump_2016_vote}
+trump_2016 <- data %>% select(state, net_trump_2016_vote) %>% 
+  distinct() 
+  
+```
+
+
+```{r senator votes}
+senator_votes <- data %>% 
+  select(-net_trump_2016_vote) %>% 
+  mutate(votes_with_trump = votes*agree_pct) %>% 
+  mutate(votes_against_trump = (votes - votes*agree_pct)) 
+
+```
+
+```{r state totals}
+
+state_senate_support <- senator_votes %>% 
+  group_by(state) %>% 
+  mutate(senator_support_by_state = sum(votes_with_trump)) %>% 
+  mutate(senator_opposition_by_state = sum(votes_against_trump)) %>% 
+  mutate(total_votes_by_state = senator_support_by_state + senator_opposition_by_state) %>% 
+  mutate(state_trump_support_pct = (senator_support_by_state/total_votes_by_state)*100) 
+
+average_state_support <- state_senate_support %>% 
+  select(state, state_trump_support_pct) %>% 
+  distinct()
+         
+```
+
+
+```{r difference}
+
+difference <- average_state_support %>% 
+  left_join(trump_2016)
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
