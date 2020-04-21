@@ -23,11 +23,15 @@ data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Cov
   na.omit() %>% 
   subset(party == 'Republican' | party == 'Democrat' | party == 'Independent')
   
+
+us_states <- map_data("state") # for later use in state visualization
 ```
 
 ```{r trump_2016_vote}
 trump_2016 <- data %>% select(state, net_trump_2016_vote) %>% 
-  distinct() 
+  distinct() %>% 
+  mutate(trump_win = case_when(net_trump_2016_vote > 0 ~ 'Yes',
+                               net_trump_2016_vote < 0 ~ 'No'))
   
 ```
 
@@ -59,11 +63,53 @@ average_state_support <- state_senate_support %>%
 ```{r difference}
 
 difference <- average_state_support %>% 
-  left_join(trump_2016)
+  left_join(trump_2016) %>% 
+  mutate(net_senate_support = state_trump_support_pct - 50) %>% 
+  mutate(trump_senate_difference = net_senate_support - net_trump_2016_vote) 
+  
+```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r vlines}
+party_colors <- c("#2E74C0", "#CB454A") # Dem and GOP colors
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# trump state vote over clinton
+ggplot(trump_2016,
+       aes(x = net_trump_2016_vote,
+           y = reorder(state, net_trump_2016_vote),
+           color = trump_win)) +
+  
+  geom_vline(xintercept = 0, color = "purple", size = 2) +
+  geom_point(size = 4) +
+  
+  scale_x_continuous(breaks = c(-30,-20,-15,-10,-5,-2.5,0,2.5,5,10,15,20,30,45),
+                     labels = c("-30", "-20", "-15", "-10", "-5", "-2.5", "0", "+2.5", "+5", "+10", "+15", "+20", "+30", "+45")) +
+  scale_color_manual(values = party_colors) +
+  
+  labs(title = "Trump Vote Margin Over Clinton, 2016",
+       subtitle = "As Percentage Point",
+       x = "", y = "",
+       caption = "Source: FiveThirtyEight") +
+  guides(color = FALSE) +
+  theme_tufte() +
+  theme(axis.text.x = element_text(size = 20),
+        axis.ticks = element_blank(),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 30, color = "purple"),
+        plot.subtitle = element_text(size = 20),
+        panel.grid.major = element_line(color = "gray"))
+
+
+# average senate agreement with trump
+
+
+
+
+
+
+
+
+
+```
+
 
