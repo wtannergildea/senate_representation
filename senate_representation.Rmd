@@ -25,6 +25,7 @@ library(scales)
 library(maps)
 library(statebins)
 library(gt)
+library(plotly)
 
 data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Covid bill
   na.omit() %>% 
@@ -240,7 +241,7 @@ statebins_continuous(difference_statebin,
 ```
 
 
-```{r table, fig.width = 200}
+```{r table, fig.width = 200, fig.height= 4}
 table <- difference %>% 
   select(state, net_senate_support, net_trump_2016_vote, trump_senate_difference) %>% 
   ungroup() 
@@ -249,7 +250,11 @@ gt(table) %>%
   tab_header(title = md("**Trump's Support in the Senate vs. Popular Electorate Support**"),
              subtitle = "Jan. 3, 2017 - Mar. 25, 2020") %>% 
   
-  tab_spanner(label = "", columns = vars(state, net_trump_2016_vote, net_senate_support, trump_senate_difference))  %>% 
+  tab_spanner(label = "", 
+              columns = vars(state, net_trump_2016_vote, net_senate_support, trump_senate_difference))  %>% 
+  
+  cols_align(align= "center",
+             columns = vars(net_trump_2016_vote, net_senate_support, trump_senate_difference)) %>% 
 
   cols_label(state = "State",
                             net_trump_2016_vote = "Trump 2016 Margin",
@@ -262,9 +267,15 @@ gt(table) %>%
   data_color(
     columns = vars(trump_senate_difference),
     colors = scales::col_numeric(
-      palette = c(
-        "orange", "yellow","green", "green", "yellow", "orange", "red"),
-      domain = NULL))
-
-
+      palette = c("orange", "yellow", "green", "green", "yellow", "orange", "red"),
+      domain = NULL),
+    alpha = .5) %>% 
+  
+  tab_options(
+    table.width = 500,
+    table.font.size = 14,
+    column_labels.font.size = 16, 
+    column_labels.font.weight = "bold",
+    table.border.top.style = "none",
+    row.padding = 4) # fixes sizing issues
 ```
