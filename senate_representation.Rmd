@@ -1,16 +1,22 @@
 ---
-title: "Senate Popular Representation"
+title: How well do your Senators represent your state's support for Trump's legislative
+  agenda?
 author: "Tanner Gildea"
 date: "4/20/2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, 
                       warning = FALSE, 
-                      message = FALSE, 
-                      fig.width = 8, 
-                      fig.height = 5)
+                      message = FALSE,
+                      fig.width = 15,
+                      fig.asp = 0.618,
+                      out.width = "70%",
+                      fig.align = "center")
+
 library(tidyverse)
 library(readxl)
 library(ggplot2)
@@ -18,6 +24,7 @@ library(ggthemes)
 library(scales)
 library(maps)
 library(statebins)
+library(gt)
 
 data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Covid bill
   na.omit() %>% 
@@ -81,7 +88,7 @@ sd <- difference %>%
 ```
 
 
-```{r vline_trump_win}
+```{r vline_trump_win, fig.width=15}
 party_colors <- c("#2E74C0", "#CB454A") # Dem and GOP colors
 
 # trump state vote over clinton
@@ -184,7 +191,7 @@ ggplot(difference,
   geom_vline(xintercept = 4, color = "grey30", size = 1.5) +
   
   annotate(geom = "text", x = 5, y = 3.5,
-             label = "Mean difference: +4\n(sd = 16)", size = 7.5, hjust = 0, color = "blue", fontface = "bold.italic")
+             label = "Mean difference: +4\n(sd = 16)", size = 7.5, hjust = 0, color = "blue", fontface = "bold.italic") 
   
 ```
 
@@ -204,10 +211,12 @@ ggplot(difference_map,
                        high = muted("#CB454A"), breaks = c(-20, -10, 0, 10, 20, 35)) +
   
   theme_map() +
-  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom",
+        plot.title = element_text(size = 30, color = "Brown"),
+        plot.subtitle = element_text(size = 20) ) +
   
   labs(title = "Trump's Support in the Senate vs. Popular Electorate Support",
-       subtitle = "Support for Trump's agenda from senators in states closer to white align more closely with how their consitituents voted for Trump",
+       subtitle = "Support for Trump's agenda from senators in states closer to white\nalign more closely with how their consitituents voted for Trump",
          fill = "Percentage point difference")
 ```
 
@@ -225,7 +234,30 @@ statebins_continuous(difference_statebin,
           brewer_pal= "PuOr", 
           font_size = 8, 
           legend_title = "Percentage point difference", 
-          plot_title = "Trump's Support in the Senate vs. Popular Electorate Support",
+          plot_title = "",
           title_position = "top")
+
+```
+
+
+```{r table, fig.width = 200}
+table <- difference %>% 
+  select(state, net_senate_support, net_trump_2016_vote, trump_senate_difference) %>% 
+  ungroup() 
+
+gt(table) %>% 
+  tab_header(title = md("**test**"),
+             subtitle = "test") %>% 
+  
+  tab_spanner(label = "test", columns = vars(state, net_trump_2016_vote, net_senate_support, trump_senate_difference))  %>% 
+
+  cols_label(state = "State",
+                            net_trump_2016_vote = "Trump 2016 Margin",
+                            net_senate_support = "Net Senate Agenda Support",
+                            trump_senate_difference = "Difference") %>% 
+  
+  fmt_number(columns = vars(net_trump_2016_vote, net_senate_support,trump_senate_difference),
+                            decimals = 1)
+
 
 ```
