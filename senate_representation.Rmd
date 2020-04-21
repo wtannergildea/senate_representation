@@ -71,7 +71,13 @@ difference <- average_state_support %>%
   mutate(trump_senate_difference = net_senate_support - net_trump_2016_vote) %>% 
   mutate(difference_dummy = case_when(trump_senate_difference >= 0 ~ "Yes",
                                          trump_senate_difference < 0 ~ "No"))
-  
+
+avg <- difference %>% 
+  summarise(avg = mean(difference$trump_senate_difference))
+
+sd <- difference %>% 
+  summarise(sd = sd(difference$trump_senate_difference))
+
 ```
 
 
@@ -144,6 +150,7 @@ ggplot(difference,
            color = difference_dummy)) +
   
   geom_vline(xintercept = 0, color = "red", size = 2) +
+
   geom_point(size = 4) +
   
   scale_x_continuous(breaks = c(-30,-20,-15,-10,-5,-2.5,0,2.5,5,10,15,25,40),
@@ -161,8 +168,24 @@ ggplot(difference,
         axis.text.y = element_text(size = 12),
         plot.title = element_text(size = 30, color = "Red"),
         plot.subtitle = element_text(size = 20),
-        panel.grid.major = element_line(color = "gray"))
-
+        panel.grid.major = element_line(color = "gray")) +
+  
+  annotate(geom = "rect", xmin = -10, xmax = 10,
+           ymin = 12, ymax = 34, fill = "green", alpha = .2) +
+  annotate(geom = "text", x = 11, y = 17.5,
+             label = "States with representative\nsupport alignment.", hjust = 0, size = 10, fontface = "bold") +
+  
+  annotate(geom = "rect", xmin = 24, xmax = 40,
+           ymin = 44, ymax = 51, fill = "red", alpha = .2) +
+  
+  annotate(geom = "text", x = 26, y = 40.5,
+             label = "Outliers relative to \nzero-adjusted mean.", size = 8, hjust = 0, color = "blue", fontface = "bold.italic") +
+  
+  geom_vline(xintercept = 4, color = "grey30", size = 1.5) +
+  
+  annotate(geom = "text", x = 5, y = 3.5,
+             label = "Mean difference: +4\n(sd = 16)", size = 7.5, hjust = 0, color = "blue", fontface = "bold.italic")
+  
 ```
 
 ```{r difference_map}
@@ -193,10 +216,15 @@ ggplot(difference_map,
 difference_statebin <- difference
 
 difference_statebin$state <- as.character(difference_statebin$state) 
-difference_statebin$state_abv <- as.character(difference_statebin$state_abv) 
-statebins(difference_statebin, state_col = "state",
-                     text_color = "black", value_col = "trump_senate_difference",
-                     brewer_pal= "YlGn", font_size = 8, legend_title = "Percentage point difference", labels = c("-20 <> -9", "-8 <> +3", "+4 <> +15", "+16 <> +27", "+28 <> +40"),
+difference_statebin$state_abv <- as.character(difference_statebin$state_abv)
+
+statebins_continuous(difference_statebin, 
+          state_col = "state", 
+          text_color = "black", 
+          value_col = "trump_senate_difference",
+          brewer_pal= "PuOr", 
+          font_size = 8, 
+          legend_title = "Percentage point difference", 
           plot_title = "Trump's Support in the Senate vs. Popular Electorate Support",
           title_position = "top")
 
