@@ -196,6 +196,8 @@ difference_statebin$state <- as.character(difference_statebin$state)
 difference_statebin$state_abv <- as.character(difference_statebin$state_abv) 
 statebins(difference_statebin, state_col = "state",
                      text_color = "black", value_col = "trump_senate_difference",
-                     brewer_pal= "YlGn", font_size = 8, legend_title = "Percentage point difference", labels = c("-20 <> -9", "-8 <> +3", "+4 <> +15", "+16 <> +27", "+28 <> +40"))
+                     brewer_pal= "YlGn", font_size = 8, legend_title = "Percentage point difference", labels = c("-20 <> -9", "-8 <> +3", "+4 <> +15", "+16 <> +27", "+28 <> +40"),
+          plot_title = "Trump's Support in the Senate vs. Popular Electorate Support",
+          title_position = "top")
 
 ```
