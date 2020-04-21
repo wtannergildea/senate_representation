@@ -246,10 +246,10 @@ table <- difference %>%
   ungroup() 
 
 gt(table) %>% 
-  tab_header(title = md("**test**"),
-             subtitle = "test") %>% 
+  tab_header(title = md("**Trump's Support in the Senate vs. Popular Electorate Support**"),
+             subtitle = "Jan. 3, 2017 - Mar. 25, 2020") %>% 
   
-  tab_spanner(label = "test", columns = vars(state, net_trump_2016_vote, net_senate_support, trump_senate_difference))  %>% 
+  tab_spanner(label = "", columns = vars(state, net_trump_2016_vote, net_senate_support, trump_senate_difference))  %>% 
 
   cols_label(state = "State",
                             net_trump_2016_vote = "Trump 2016 Margin",
@@ -257,7 +257,14 @@ gt(table) %>%
                             trump_senate_difference = "Difference") %>% 
   
   fmt_number(columns = vars(net_trump_2016_vote, net_senate_support,trump_senate_difference),
-                            decimals = 1)
+                            decimals = 1) %>% 
+  
+  data_color(
+    columns = vars(trump_senate_difference),
+    colors = scales::col_numeric(
+      palette = c(
+        "orange", "yellow","green", "green", "yellow", "orange", "red"),
+      domain = NULL))
 
 
 ```
