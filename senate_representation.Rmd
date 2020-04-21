@@ -17,9 +17,9 @@ library(ggplot2)
 library(ggthemes)
 library(scales)
 library(maps)
+library(statebins)
 
 data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Covid bill
-  select(-district) %>% 
   na.omit() %>% 
   subset(party == 'Republican' | party == 'Democrat' | party == 'Independent')
   
@@ -55,7 +55,7 @@ state_senate_support <- senator_votes %>%
   mutate(state_trump_support_pct = (senator_support_by_state/total_votes_by_state)*100) 
 
 average_state_support <- state_senate_support %>% 
-  select(state, state_trump_support_pct) %>% 
+  select(state, state_abv, state_trump_support_pct) %>% 
   distinct() %>% 
   mutate(trump_support_dummy = case_when(state_trump_support_pct >= 50 ~ "Yes",
                                          state_trump_support_pct < 50 ~ "No"))
@@ -178,7 +178,24 @@ ggplot(difference_map,
   coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
   
   scale_fill_gradient2(low = muted("#2E74C0"), mid = ("white"),
-                       high = muted("#CB454A"),breaks = c(-20, -10, 0, 10, 20, 35)) +
+                       high = muted("#CB454A"), breaks = c(-20, -10, 0, 10, 20, 35)) +
+  
+  theme_map() +
+  theme(legend.position = "bottom") +
+  
+  labs(title = "Trump's Support in the Senate vs. Popular Electorate Support",
+       subtitle = "Support for Trump's agenda from senators in states closer to white align more closely with how their consitituents voted for Trump",
+         fill = "Percentage point difference")
+```
 
-  theme_map()
+```{r statebin}
+
+difference_statebin <- difference
+
+difference_statebin$state <- as.character(difference_statebin$state) 
+difference_statebin$state_abv <- as.character(difference_statebin$state_abv) 
+statebins(difference_statebin, state_col = "state",
+                     text_color = "white", value_col = "trump_senate_difference",
+                     brewer_pal="Reds", font_size = 3)
+
 ```
