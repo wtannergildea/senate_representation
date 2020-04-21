@@ -24,7 +24,8 @@ data <- read.csv("senate_votes.csv") %>% # current as of March 25 2 trillion Cov
   subset(party == 'Republican' | party == 'Democrat' | party == 'Independent')
   
 
-us_states <- map_data("state") # for later use in state visualization
+us_states <- map_data("state")  # for later use in state visualization
+
 ```
 
 ```{r trump_2016_vote}
@@ -55,7 +56,9 @@ state_senate_support <- senator_votes %>%
 
 average_state_support <- state_senate_support %>% 
   select(state, state_trump_support_pct) %>% 
-  distinct()
+  distinct() %>% 
+  mutate(trump_support_dummy = case_when(state_trump_support_pct >= 50 ~ "Yes",
+                                         state_trump_support_pct < 50 ~ "No"))
          
 ```
 
@@ -65,12 +68,14 @@ average_state_support <- state_senate_support %>%
 difference <- average_state_support %>% 
   left_join(trump_2016) %>% 
   mutate(net_senate_support = state_trump_support_pct - 50) %>% 
-  mutate(trump_senate_difference = net_senate_support - net_trump_2016_vote) 
+  mutate(trump_senate_difference = net_senate_support - net_trump_2016_vote) %>% 
+  mutate(difference_dummy = case_when(trump_senate_difference >= 0 ~ "Yes",
+                                         trump_senate_difference < 0 ~ "No"))
   
 ```
 
 
-```{r vlines}
+```{r vline_trump_win}
 party_colors <- c("#2E74C0", "#CB454A") # Dem and GOP colors
 
 # trump state vote over clinton
@@ -98,18 +103,82 @@ ggplot(trump_2016,
         plot.title = element_text(size = 30, color = "purple"),
         plot.subtitle = element_text(size = 20),
         panel.grid.major = element_line(color = "gray"))
+```
 
+```{r vline_senate_votes}
 
 # average senate agreement with trump
-
-
-
-
-
-
-
-
+ggplot(average_state_support,
+       aes(x = state_trump_support_pct,
+           y = reorder(state, state_trump_support_pct),
+           color = trump_support_dummy)) +
+  
+  geom_vline(xintercept = 50, color = "orange", size = 2) +
+  geom_point(size = 4) +
+  
+  scale_x_continuous(breaks = c(0,10,20,30,40,50,60,70,80,90,100),
+                     labels = c("0%","10%", "20%","30%","40%","50%","60%","70%","80%","90%","100%")) +
+  scale_color_manual(values = party_colors) +
+  
+  labs(title = "Senate Support For Trump's Legislative Agenda",
+       subtitle = "Percent of votes cast in alignment with Trump, average across each state's two senators",
+       x = "", y = "",
+       caption = "Source: FiveThirtyEight") +
+  guides(color = FALSE) +
+  theme_tufte() +
+  theme(axis.text.x = element_text(size = 20),
+        axis.ticks = element_blank(),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 30, color = "orange"),
+        plot.subtitle = element_text(size = 20),
+        panel.grid.major = element_line(color = "gray"))
 
 ```
 
+```{r vline_difference}
 
+# average senate agreement with trump
+ggplot(difference,
+       aes(x = trump_senate_difference,
+           y = reorder(state, trump_senate_difference),
+           color = difference_dummy)) +
+  
+  geom_vline(xintercept = 0, color = "red", size = 2) +
+  geom_point(size = 4) +
+  
+  scale_x_continuous(breaks = c(-30,-20,-15,-10,-5,-2.5,0,2.5,5,10,15,25,40),
+                     labels = c("-30", "-20", "-15", "-10", "-5", "-2.5", "0", "+2.5", "+5", "+10", "+15", "+25", "+40")) +
+  scale_color_manual(values = party_colors) +
+  
+  labs(title = "Difference in Popular Support for Trump vs. Legislative Support in Senate",
+       subtitle = "As percentage point by state",
+       x = "", y = "",
+       caption = "Source: Original vote records from FiveThirtyEight.") +
+  guides(color = FALSE) +
+  theme_tufte() +
+  theme(axis.text.x = element_text(size = 20),
+        axis.ticks = element_blank(),
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 30, color = "Red"),
+        plot.subtitle = element_text(size = 20),
+        panel.grid.major = element_line(color = "gray"))
+
+```
+
+```{r difference_map}
+difference_map_prep <- difference
+difference_map_prep$region <- tolower(difference_map_prep$state)
+
+difference_map <- left_join(us_states, difference_map_prep)
+
+ggplot(difference_map,
+       aes(x = long, y = lat, group = group, fill = trump_senate_difference)) +
+  
+  geom_polygon(color = "black", size = .3) +
+  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+  
+  scale_fill_gradient2(low = muted("#2E74C0"), mid = ("white"),
+                       high = muted("#CB454A"),breaks = c(-20, -10, 0, 10, 20, 35)) +
+
+  theme_map()
+```
